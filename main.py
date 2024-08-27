@@ -15,3 +15,8 @@ def input_filename(files):
                 print(f'An unexpected error occurred: {e}')
                 break  # Optionally break the loop on other exceptions to prevent infinite looping
     return file_handles
+
+# Files to request from user
+files = ['csv with student IDs, grade levels, and schoos', 
+         'csv with school IDs, program codes, sessions codes, program names, provider Id, provider name, and school name ']
+
