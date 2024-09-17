@@ -1,9 +1,15 @@
 import pandas as pd
 
 def standardize_column_names(df, column_mapping):
+    # Convert all column names to lowercase and strip whitespace
     df.columns = df.columns.str.strip().str.lower()
+    
+    # Apply the column mapping to rename columns
     standardized_columns = {col: column_mapping.get(col, col) for col in df.columns}
     df.rename(columns=standardized_columns, inplace=True)
+    
+    # Print the columns after standardization for debugging
+    print("Columns after standardization:", df.columns.tolist())
 
 def map_grade_level(grade_level):
     if grade_level.lower() == "0":
@@ -24,9 +30,13 @@ def process_data(test_data, codes, enrolled='', waitlisted=''):
             raise KeyError(f"Missing required column in test_data: '{col}'")
 
     # Ensure required columns are present in codes
-    required_codes_columns = ['School Name', 'Program Name', 'School ID', 'Provider ID', 'Program Code', 'Session Code']
-    if 'Grade Levels' not in codes.columns:
-        required_codes_columns.append('Grade Levels')  # Add 'Grade Levels' if it was used in your data
+    required_codes_columns = ['program code', 'session code', 'program name', 'provider id', 'provider name', 'school id', 'school name']
+    
+    # Check if 'grade levels' is present in the codes DataFrame
+    if 'grade levels' in codes.columns:
+        required_codes_columns.append('grade levels')
+    
+    # Check for missing columns in the codes DataFrame
     for col in required_codes_columns:
         if col not in codes.columns:
             raise KeyError(f"Missing required column in codes: '{col}'")
@@ -35,7 +45,7 @@ def process_data(test_data, codes, enrolled='', waitlisted=''):
     error_rows = []
     
     for index, row in test_data.iterrows():
-        student_id = row.get('Student ID')
+        student_id = row.get('student id')
         school_name = row.get('school name')
         grade_level = str(row.get('grade level')).strip() if pd.notna(row.get('grade level')) else None
         enrollment_status = row.get('enrollment status')
@@ -62,22 +72,22 @@ def process_data(test_data, codes, enrolled='', waitlisted=''):
 
         if grade_level:
             # Check if Grade Levels column exists in codes
-            if 'Grade Levels' in codes.columns:
+            if 'grade levels' in codes.columns:
                 matching_code = codes[
-                    (codes['School Name'].str.lower() == school_name.lower()) &
-                    (codes['Grade Levels'].str.lower() == grade_level.lower())
+                    (codes['school name'].str.lower() == school_name.lower()) &
+                    (codes['grade levels'].str.lower() == grade_level.lower())
                 ]
             else:
                 matching_code = codes[
-                    (codes['School Name'].str.lower() == school_name.lower()) &
-                    (codes['Program Name'].str.lower().str.contains(grade_level.lower(), na=False))
+                    (codes['school name'].str.lower() == school_name.lower()) &
+                    (codes['program name'].str.lower().str.contains(grade_level.lower(), na=False))
                 ]
 
             if not matching_code.empty:
-                school_id = matching_code['School ID'].values[0]
-                provider_id = matching_code['Provider ID'].values[0]
-                program_code = matching_code['Program Code'].values[0]
-                session_code = matching_code['Session Code'].values[0]
+                school_id = matching_code['school id'].values[0]
+                provider_id = matching_code['provider id'].values[0]
+                program_code = matching_code['program code'].values[0]
+                session_code = matching_code['session code'].values[0]
                 
                 waitlist_status = ''
                 if waitlisted and waitlisted in enrollment_status:
